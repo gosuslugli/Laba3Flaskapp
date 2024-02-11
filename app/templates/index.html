@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Environment</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Добавленные стили для увеличения размера и улучшения внешнего вида кнопки */
+        .btn {
+            display: inline-block;
+            padding: 15px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 90%;
+            margin: 0 auto;
+        }
+        .element {
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 45%;
+            margin-bottom: 20px;
+        }
+        .element h2 {
+            margin-top: 0;
+        }
+        .element p {
+            margin-bottom: 0;
+            font-size: 40px;
+        }
+        .element input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .cameras {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            margin: 0 auto;
+        }
+        .camera {
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 22%;
+            height: auto;
+        }
+        .camera img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>Smart Environment</h1>
+<div class="container">
+    <div class="element">
+        <h2>Temperature:</h2>
+        <p id="temperature-value">25°C</p>
+
+    </div>
+    <div class="element">
+        <h2>Brightness:</h2>
+        <p id="brightness-value">50%</p>
+
+    </div>
+    <div class="element">
+        <h2>People Count:</h2>
+        <p id="people-count-value">0</p>
+    </div>
+    <div class="element">
+        <div>
+        <h2>Light Status:</h2>
+            <p id="status_light">OFF</p>
+        </div>
+        <button id="switch_light" class="btn"> Switch</button>
+    </div>
+</div>
+<div class="cameras">
+    <div class="camera" id="camera1">
+        <img id="cam1" src="static/images/dark_road1.jpg" alt="Camera 1">
+    </div>
+    <div class="camera" id="camera3">
+        <img id="cam2" src="static/images/dark_road3.jpg" alt="Camera 3">
+    </div>
+    <div class="camera" id="camera2">
+        <img id="cam3" src="static/images/dark_road2.jpg" alt="Camera 2">
+    </div>
+    <div class="camera" id="camera4">
+        <img id="cam4" src="static/images/dark_road4.jpg" alt="Camera 4">
+    </div>
+</div>
+
+<script>
+    // Функция для обновления данных
+    function updateData() {
+        $.ajax({
+            url: '/get_data',  // URL-адрес, на который отправляется запрос
+            type: 'GET',
+            dataType: 'json',  // Указываем, что ожидаем JSON в ответе
+            success: function(response) {
+                console.log(response);
+                // Обновляем содержимое текстовых элементов
+                $('#temperature-value').text(response.tp1 + '°C');
+                $('#brightness-value').text(response.lg1 + ' lumen');
+                $('#people-count-value').text(response.cam1 + ' people');
+            }
+        });
+    }
+
+    // Функция для переключения состояния света
+    function switchLight() {
+        $.ajax({
+            url: '/switch_light',  // URL-адрес, на который отправляется запрос
+            type: 'GET',
+            dataType: 'json',  // Указываем, что ожидаем JSON в ответе
+            success: function(response) {
+                console.log(response);
+                var status = response.status;
+                var txt = (status)? "Включен" : "Выключен";
+                $('#status_light').text(txt);
+                console.log(status);
+                 if (status) {
+                $('#cam1').attr('src', "{{ url_for('static', filename='images/road1.jpg') }}");
+                $('#cam2').attr('src', "{{ url_for('static', filename='images/road2.jpg') }}");
+                $('#cam3').attr('src', "{{ url_for('static', filename='images/road3.jpg') }}");
+                $('#cam4').attr('src', "{{ url_for('static', filename='images/road4.jpg') }}");
+            } else {
+                $('#cam1').attr('src', "{{ url_for('static', filename='images/dark_road1.jpg') }}");
+                $('#cam2').attr('src', "{{ url_for('static', filename='images/dark_road2.jpg') }}");
+                $('#cam3').attr('src', "{{ url_for('static', filename='images/dark_road3.jpg') }}");
+                $('#cam4').attr('src', "{{ url_for('static', filename='images/dark_road4.jpg') }}");
+            }
+
+            }
+        });
+    }
+
+    // Вызываем функцию обновления данных каждые 5 секунд
+    setInterval(updateData, 5000);
+
+    // Запускаем обновление данных сразу после загрузки страницы
+    $(document).ready(function() {
+        updateData();
+    });
+
+    // Привязываем функцию switchLight к нажатию кнопки с id="switch_light"
+    $('#switch_light').click(switchLight);
+</script>
+</body>
+</html>
